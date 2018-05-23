@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="8fcc9def-eb37-4d7e-8661-96163f232177" name="SFTP" url="http://10.214.161.111">
+        <fileTransfer host="10.214.161.111" port="22" rootFolder="/home/give/Game/OCR/Papers-code/EAST-Modify" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
