@@ -7,10 +7,9 @@
 - 选择:
 	- 我最后选择的第二种,基于U-Net的EAST, 首先我认为基于U-Net的方法可以理论上实现对detection object的尺度任意性. 而PixelLink方法他对处理有大面积overlap的处理方法并不太合适(也许是我理解的有问题),详情参加下面
 	- PixelLink是怎么处理有Overlap现象的呢?正如论文中提到的,PixelLink方法中有两个ground truth, 一个是label map(1通道),代表每个Pixel是否是text, 一个是link map(8 通道),它代表的是每个pixel的8领域所对应的元素是否和自己在同一个text instance中. 如果在则为1,否则为0. 如果有overlap的画,作者将其处理overlap的score map和link map都置为0,这在一些图片上是没有问题的,例如图1,但是在图2中就会存在问题,会将两个有overlap的bounding box划分成四个bounding box. 这个问题对ICPR的数据集来说影响还是很大的.
-<center>![image](http://ocnsbpp0d.bkt.clouddn.com/PixelLink.png)</center>
-<center>图1</center>
-<center>![image](http://ocnsbpp0d.bkt.clouddn.com/14.png)</center>
-<center>图2</center>
+![image](http://ocnsbpp0d.bkt.clouddn.com/PixelLink.png)
+
+![image](http://ocnsbpp0d.bkt.clouddn.com/14.png)
 - 尝试改进:
 	- 先后尝试了8个版本
 	- east_icdar2015_resnet_v1_50_rbox: 首先我们发现将EAST直接反卷积到原图尺寸效果会比较好(原版本是反卷积到原图尺寸的1/4或者是1/2).可能是因为我们的数据集中小的text instance比较少的原因吧
