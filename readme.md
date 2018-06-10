@@ -1,96 +1,91 @@
-# EAST: An Efficient and Accurate Scene Text Detector
-
-### Introduction
-This is a tensorflow re-implementation of [EAST: An Efficient and Accurate Scene Text Detector](https://arxiv.org/abs/1704.03155v2).
-The features are summarized blow:
-+ Online demo
-	+ http://east.zxytim.com/
-	+ Result example: http://east.zxytim.com/?r=48e5020a-7b7f-11e7-b776-f23c91e0703e
-	+ CAVEAT: There's only one cpu core on the demo server. Simultaneous access will degrade response time.
-+ Only **RBOX** part is implemented.
-+ A fast Locality-Aware NMS in C++ provided by the paper's author.
-+ The pre-trained model provided achieves **80.83** F1-score on ICDAR 2015
-	Incidental Scene Text Detection Challenge using only training images from ICDAR 2015 and 2013.
-  see [here](http://rrc.cvc.uab.es/?ch=4&com=evaluation&view=method_samples&task=1&m=29855&gtv=1) for the detailed results.
-+ Differences from original paper
-	+ Use ResNet-50 rather than PVANET
-	+ Use dice loss (optimize IoU of segmentation) rather than balanced cross entropy
-	+ Use linear learning rate decay rather than staged learning rate decay
-+ Speed on 720p (resolution of 1280x720) images:
-	+ Now
-		+ Graphic card: GTX 1080 Ti
-		+ Network fprop: **~50 ms**
-		+ NMS (C++): **~6ms**
-		+ Overall: **~16 fps**
-	+ Then
-		+ Graphic card: K40
-		+ Network fprop: ~150 ms
-		+ NMS (python): ~300ms
-		+ Overall: ~2 fps
-
-Thanks for the author's ([@zxytim](https://github.com/zxytim)) help!
-Please cite his [paper](https://arxiv.org/abs/1704.03155v2) if you find this useful.
-
-### Contents
-1. [Installation](#installation)
-2. [Download](#download)
-2. [Demo](#demo)
-3. [Test](#train)
-4. [Train](#test)
-5. [Examples](#examples)
-
-### Installation
-1. Any version of tensorflow version > 1.0 should be ok.
-
-### Download
-1. Models trained on ICDAR 2013 (training set) + ICDAR 2015 (training set): [BaiduYun link](http://pan.baidu.com/s/1jHWDrYQ) [GoogleDrive](https://drive.google.com/open?id=0B3APw5BZJ67ETHNPaU9xUkVoV0U)
-2. Resnet V1 50 provided by tensorflow slim: [slim resnet v1 50](http://download.tensorflow.org/models/resnet_v1_50_2016_08_28.tar.gz)
-
-### Train
-If you want to train the model, you should provide the dataset path, in the dataset path, a separate gt text file should be provided for each image
-and run
-
-```
-python multigpu_train.py --gpu_list=0 --input_size=512 --batch_size_per_gpu=14 --checkpoint_path=/tmp/east_icdar2015_resnet_v1_50_rbox/ \
---text_scale=512 --training_data_path=/data/ocr/icdar2015/ --geometry=RBOX --learning_rate=0.0001 --num_readers=24 \
---pretrained_model_path=/tmp/resnet_v1_50.ckpt
-```
-
-If you have more than one gpu, you can pass gpu ids to gpu_list(like --gpu_list=0,1,2,3)
-
-**Note: you should change the gt text file of icdar2015's filename to img_\*.txt instead of gt_img_\*.txt(or you can change the code in icdar.py), and some extra characters should be removed from the file.
-See the examples in training_samples/**
-
-### Demo
-If you've downloaded the pre-trained model, you can setup a demo server by
-```
-python3 run_demo_server.py --checkpoint-path /tmp/east_icdar2015_resnet_v1_50_rbox/
-```
-Then open http://localhost:8769 for the web demo. Notice that the URL will change after you submitted an image.
-Something like `?r=49647854-7ac2-11e7-8bb7-80000210fe80` appends and that makes the URL persistent.
-As long as you are not deleting data in `static/results`, you can share your results to your friends using
-the same URL.
-
-URL for example below: http://east.zxytim.com/?r=48e5020a-7b7f-11e7-b776-f23c91e0703e
-![web-demo](demo_images/web-demo.png)
-
-
-### Test
-run
-```
-python eval.py --test_data_path=/tmp/images/ --gpu_list=0 --checkpoint_path=/tmp/east_icdar2015_resnet_v1_50_rbox/ \
---output_dir=/tmp/
-```
-
-a text file will be then written to the output path.
-
-
-### Examples
-Here are some test examples on icdar2015, enjoy the beautiful text boxes!
-![image_1](demo_images/img_2.jpg)
-![image_2](demo_images/img_10.jpg)
-![image_3](demo_images/img_14.jpg)
-![image_4](demo_images/img_26.jpg)
-![image_5](demo_images/img_75.jpg)
-
-Please let me know if you encounter any issues(my email boostczc@gmail dot com).
+- ICPR2018举办的文本检测比赛,详细链接[请戳](https://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100066.0.0.6acdd780TvrRix&raceId=231651).
+- 任务描述:从一副图像中检测出文本所在的位置.
+- 先后尝试了三种做法:
+	- 基于Faster RCNN的CTPN方法,[代码链接](https://github.com/eragonruan/text-detection-ctpn). 直接加载训练好的模型在数据集上测试F1 score只是0.10数量级. 关于CTPN的详情请看我的这篇博文---[\[论文阅读\]---CTPN](https://blog.csdn.net/liangdong2014/article/details/79690118)
+	- 基于U-Net的EAST, [代码链接](https://github.com/argman/EAST). 直接加载训练好的模型在数据集上测试F1 score是0.20数量级. 关于East的详情请看我的这篇博文---[\[论文阅读\]---EAST](https://blog.csdn.net/liangdong2014/article/details/79857061)
+	- 基于U-Net的PixelLink的方法,这个没有开源的代码,论文[请戳](https://arxiv.org/pdf/1801.01315.pdf). 该文章也是基于U-Net的方法,它认为传统的基于Faster RCNN的方法需要设置proposal的大小,对尺度不具有任意性.而基于U-Net的EAST,它计算几何的loss也和CTPN一样,是对localization的一个regression处理.作者认为,我们可以直接从text/ non text的prediction中得到text 的bounding box,所以作者认为没有必要计算这个regression.他们直接从score prediction中通过opencv 的min_areaRect方法计算得到bounding box.
+- 选择:
+	- 我最后选择的第二种,基于U-Net的EAST, 首先我认为基于U-Net的方法可以理论上实现对detection object的尺度任意性. 而PixelLink方法他对处理有大面积overlap的处理方法并不太合适(也许是我理解的有问题),详情参加下面
+	- PixelLink是怎么处理有Overlap现象的呢?正如论文中提到的,PixelLink方法中有两个ground truth, 一个是label map(1通道),代表每个Pixel是否是text, 一个是link map(8 通道),它代表的是每个pixel的8领域所对应的元素是否和自己在同一个text instance中. 如果在则为1,否则为0. 如果有overlap的画,作者将其处理overlap的score map和link map都置为0,这在一些图片上是没有问题的,例如图1,但是在图2中就会存在问题,会将两个有overlap的bounding box划分成四个bounding box. 这个问题对ICPR的数据集来说影响还是很大的.
+<center>![image](http://ocnsbpp0d.bkt.clouddn.com/PixelLink.png)</center>
+<center>图1</center>
+<center>![image](http://ocnsbpp0d.bkt.clouddn.com/14.png)</center>
+<center>图2</center>
+- 尝试改进:
+	- 先后尝试了8个版本
+	- east_icdar2015_resnet_v1_50_rbox: 首先我们发现将EAST直接反卷积到原图尺寸效果会比较好(原版本是反卷积到原图尺寸的1/4或者是1/2).可能是因为我们的数据集中小的text instance比较少的原因吧
+	- east_icdar2015_resnet_v1_50_rbox_v1: 在原来的版本中,在处理反卷积这一块作者只使用了resize, 可能是为了避免棋盘效应的, 我是在resize后面增加了一层卷积.保存的是在上面的基础上使用(conv+resize)代替(resize)的版本
+	- east_icdar2015_resnet_v1_50_rbox_v2: 保存的是在上面的基础上使用OHEM的版本(只对geometry使用OHEM，对score map不使用). 在PixelLink论文中看到他使用OHEM方法来选择hard negative pixel,以避免正负text pixel的个数不平衡的问题.
+	- east_icdar2015_resnet_v1_50_rbox_v3: 在V2的基础上改用Inception-ResNet model. 将原来的ResNet50 改造成Inception_ResNet model
+	- east_icdar2015_resnet_v1_50_rbox_v4: 在V3的基础上加上instance-balanced cross entropy loss的结果. 这也是在PixelLink中使用的方法,主要是为了避免不同size的text instance对loss造成的影响不同,大的造成的影响大. 其实后来我也发现了,EAST model is not effective with longer text instance than shorter text instance
+	- east_icdar2015_resnet_v1_50_rbox_v5: 在V4的基础上使用BLSTM提取全局的特征. 这里是想结合一下CTPN,因为CTPN中使用BLSTM去提取了global的Feature. 出发点是想让每个pixel的感受野更宽广,使得对大的pixel预测的更准. 在这里的做法是对每一层即将进行反卷积的Feature map使用LSTM去提取特征.
+	- east_icdar2015_resnet_v1_50_rbox_v6: 在V4的基础上又增加了一个优化的branch---IoU Loss, 主要是因为我们在测试阶段只使用score来作为bounding box的得分是有点不公平的. 这里的出发点是因为EAST模型中,在test 阶段,我们是使用该pixel的score得分来作为整个bounding box的得分的,这其实是不公平的,只用一个点代表整个bounding box可能存在一定的偶然性. 为了解决该问题,我们想出了两种解决方案:
+		- 在测试阶段,使用bounding box内部score的均值作为该bounding box的得分,实验结果表明有改善,但是改善幅度不大. 反而会大幅度增加测试阶段的耗时.
+		- 正如我们前面所说,我们再EAST的基础上,再增加一个branch,计算每个bounding box的IoU 值,然后与预测得到的IoU计算一个Smooth L1 loss,该方法的问题是在训练阶段耗时会超大大幅度增加,因为假设我们图片的大小是512*512,那么针对一幅图像我们每次都要根据geometry prediction和score prediction计算512*512个IoU,这还是在CPU上计算的(gpu不会...),所以会很慢,由于时间关系没有跑下去.
+	- east_icdar2015_resnet_v1_50_rbox_v7: 在V4的基础上使用了instance-banlanced的weights.
+- 数据增广
+	- rotate
+	- Flipud 水平镜像
+	- Fliplr 垂直镜像
+	- 随机Dropout
+	- 随机增加噪声
+- 效果
+	- 最开始的版本
+	    - Evulation by owner method（153578 step）
+	        - Precision is 0.5885
+	        - Recall is 0.4008
+	        - F1 score is 0.4769
+	    - Evulation by ICDAR method （153578 step）
+	        - "precision": 0.7764084507042254
+	        - "recall": 0.43192948090107736
+	        - "hmean": 0.5550660792951542
+	- 添加反卷积，使其反卷积到原图尺寸
+	    - Evulation by owner method（408899 step）
+	        - Precision is 0.5705
+	        - Recall is 0.4433
+	        - F1 score is 0.4989
+	    - Evulation by ICDAR method （408899 step）
+	        - "recall": 0.5039177277179236
+	        - "precision": 0.7516435354273192
+	        - "hmean": 0.6033421284080915
+	- 添加反卷积，使其反卷积到原图尺寸+conv代替unpool+score map加入ｇｅｏｍｅｔｒｙ中去
+	    - Evulation by owner method（110930 step）
+	        - Precision is　0.5343
+	        - Recall is　0.4330
+	        - F1 score is 0.4784
+	- 添加反卷积，使其反卷积到原图尺寸+conv代替unpool+score map加入ｇｅｏｍｅｔｒｙ中去 + OHEM for geometry
+	    - Evulation by owner method（148415 step）
+	        - Precision is 0.5461
+	        - Recall is 0.4589
+	        - F1 score is 0.4987
+	    - Evulation by ICDAR method（148415 step）
+	        - "recall": 0.5269343780607247
+	        - "precision": 0.727027027027027
+	        - "hmean": 0.6110164679159569
+	- Inceptio-ResNet Version(Modify V3)
+	    - Evulation by owner method（257009 step）
+	        - Precision is 0.5315
+	        - Recall is 0.4306
+	        - F1 score is 0.4758
+	    - Evulation by ICDAR method (257009 step )
+	        - "recall": 0.5259549461312438
+	        - "precision": 0.7351129363449692\
+	        - "hmean": 0.6131886954039394
+	- Inceptio-ResNet Version + balanced cross_entropy loss + without OHEM(Modify V4)
+	    - Evulation by owner method（423777 step）
+	        - Precision is 0.5633
+	        - Recall is 0.4601
+	        - F1 score is 0.5065
+	        - 1000 vresion: 0.51
+	    - Evulation by ICDAR method (423777 step )
+	        - "recall": 0.539177277179236
+	        - "precision": 0.7582644628099173
+	        - "hmean": 0.6302232398397253
+- Future
+	- 其实个人感觉基于U-Net的方法应该是未来的主流,主要原因:
+		- 代码简洁易懂,解决同一个问题,如果能取得相同的效果,人们肯定喜欢用简单的方法
+		- U-Net对object的尺度具有一定的任意性.
+	- 还有什么可以改进的?
+		- EAST还是对长的text instance识别的不准确,仅凭我上述说的方法并不能解决该问题.
+		- 还有一个就是在进行nms时候,pixel的score不能很公平的代表整个bounding box的得分.
+- 整体的代码:[UpCoder-EAST](https://github.com/UpCoder/ICPR_TextDection),主要还是根据原始版本的EAST方法改的,原始的EAST版本:[EAST](https://github.com/argman/EAST)

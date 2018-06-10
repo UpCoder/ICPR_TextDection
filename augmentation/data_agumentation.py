@@ -6,9 +6,10 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 import time
 from utils.tools import save_gt_file, vis_img_bbox
-ia.seed(int((time.time()*1000)%100000))
+
 
 def data_agumentation(img, gt_bbox, operation_obj, txts=None, save_flag=None):
+    ia.seed(int((time.time() * 1000) % 100000))
     shape = np.shape(gt_bbox)
     [h, w, _] = np.shape(img)
     if shape[1] == 8:
@@ -56,7 +57,8 @@ if __name__ == '__main__':
     bboxes = np.reshape(coords, [-1, 4, 2])
 
     angle = np.random.random() * 90
-    operation_obj = iaa.Affine(rotate=(-angle, angle))
+    operation_obj = iaa.Crop(px=(0, 10), random_state=np.random.randint(0, 10000))
+    # operation_obj = iaa.Affine(rotate=(-angle, angle))
     # operation_obj = iaa.Sequential([iaa.Flipud(1.0)])
     # operation_obj = iaa.Sequential([iaa.Fliplr(1.0)])
     # operation_obj = iaa.Sequential([iaa.Dropout(p=(0, 0.1), random_state=np.random.randint(0, 10000))])
